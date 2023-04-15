@@ -69,8 +69,14 @@ local volumes = import 'templates/volumes.libsonnet';
                   import json
                   import cloud_tpu_client
                   import sys
+                  import keras
                   print('python version: ' + str(sys.version))
                   print('tf_version: ' + str(tf.__version__))
+
+                  import subprocess
+                  subprocess.call(['pip', 'uninstall', 'keras-nightly'])
+                  subprocess.call(['pip', 'install', 'keras-nightly==2.13.0.dev2023032307'])
+                  print('keras_version: ' + str(keras.__version__))
                   #TODO(chandrasekhard):
                   # Add extra condition to fail if it picks stale image
                   print(str(tf.__file__))
@@ -155,10 +161,12 @@ local volumes = import 'templates/volumes.libsonnet';
               echo ${tpu_name} > /scripts/tpu_name
               gcloud compute tpus describe ${tpu_name} --project=${project} --zone=${zone} --format="value(networkEndpoints[0].ipAddress)" > /scripts/tpu_ip
               gcloud compute tpus describe ${tpu_name} --project=${project} --zone=${zone} --flatten="networkEndpoints[]" --format="csv[no-heading](networkEndpoints.ipAddress)" > /scripts/all_tpu_ips
+              gcloud alpha compute tpus tpu-vm ssh ${tpu_name}  --zone=${zone} --project=${project}  --internal-ip --worker=all --command "echo Y | sudo pip3 uninstall keras-nightly && sudo pip3 install keras-nightly==2.13.0.dev2023032307"
               softwareVersion=%(softwareVersion)s
               if [[ ${softwareVersion: -3} == "pod" ]]; then
                  yes '' | gcloud compute config-ssh
                  sleep %(sleepTime)d
+                 gcloud alpha compute tpus tpu-vm ssh ${tpu_name}  --zone=${zone} --project=${project}  --internal-ip --worker=all --command "echo Y | sudo pip3 uninstall keras-nightly && sudo pip3 install keras-nightly==2.13.0.dev2023032307"
                  gcloud alpha compute tpus tpu-vm ssh ${tpu_name}  --zone=${zone} --project=${project}  --internal-ip --worker=all --command "sudo sed -i 's/TF_DOCKER_URL=.*/TF_DOCKER_URL=gcr.io\/cloud-tpu-v2-images-dev\/grpc_tpu_worker:nightly\"/' /etc/systemd/system/tpu-runtime.service"
                  gcloud alpha compute tpus tpu-vm ssh ${tpu_name}  --zone=${zone} --project=${project}  --internal-ip --worker=all --command "sudo systemctl daemon-reload && sudo systemctl restart tpu-runtime"
               fi
