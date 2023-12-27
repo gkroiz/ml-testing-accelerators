@@ -1,0 +1,82 @@
+"apiVersion": "batch/v1"
+"kind": "CronJob"
+"metadata":
+  "name": "cronjob-cleanup"
+"spec":
+  "jobTemplate":
+    "spec":
+      "backoffLimit": 0
+      "template":
+        "spec":
+          "containers":
+          - "args":
+            - |
+              cat > tests.txt <<EOF
+              cronjob.batch/flax.latest-bart-wiki.summary-conv-v4-32-1vm
+              cronjob.batch/flax.latest-bart-wiki.summary-func-v4-8-1vm
+              cronjob.batch/flax.latest-bert-glue.mnli-conv-v4-32-1vm
+              cronjob.batch/flax.latest-bert-glue.mnli-func-v4-8-1vm
+              cronjob.batch/flax.latest-bert-glue.mrpc-conv-v4-32-1vm
+              cronjob.batch/flax.latest-bert-glue.mrpc-func-v4-8-1vm
+              cronjob.batch/flax.latest-gpt2-oscar-func-v4-8-1vm
+              cronjob.batch/flax.latest-sd-pokemon-conv-v4-32-1vm
+              cronjob.batch/flax.latest-sd-pokemon-func-v4-8-1vm
+              cronjob.batch/flax.latest-vit-imagenette-conv-v4-32-1vm
+              cronjob.batch/flax.latest-vit-imagenette-func-v4-8-1vm
+              cronjob.batch/pax-nightly-c4spmd1b-pretraining-conv-v4-8-1vm
+              cronjob.batch/pax-nightly-lmcloudspmdadam-func-v4-16-1vm
+              cronjob.batch/pt-2.2-accelerate-smoke-v4-8-1vm
+              cronjob.batch/pt-2.2-hf-diffusers-conv-v4-8-1vm
+              cronjob.batch/pt-2.2-hf-diffusers-func-v4-8-1vm
+              cronjob.batch/pt-2.2-hf-fsmt-pjrt-conv-v4-8-1vm
+              cronjob.batch/pt-2.2-hf-fsmt-pjrt-func-v4-8-1vm
+              cronjob.batch/pt-2.2-hf-glue-pjrt-conv-v4-8-1vm
+              cronjob.batch/pt-2.2-hf-gpt2-2b-pjrt-conv-v4-8-1vm
+              cronjob.batch/pt-2.2-lightning-sd-model-pjrt-func-v4-8-1vm
+              cronjob.batch/pt-2.2-llama2-pjrt-infer-func-v4-8-1vm-1vm
+              cronjob.batch/pt-2.2-llama2-pjrt-train-spmd-func-v4-8-1vm-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-conv-v4-32-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-conv-v4-8-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-ddp-conv-v4-8-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-ddp-fake-v4-8-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-fake-v4-32-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-fake-v4-8-1vm
+              cronjob.batch/pt-2.2-resnet50-spmd-batch-func-v4-8-1vm
+              cronjob.batch/pt-2.2-resnet50-spmd-spatial-func-v4-8-1vm
+              cronjob.batch/pt-nightly-accelerate-smoke-v4-8-1vm
+              cronjob.batch/pt-nightly-hf-diffusers-conv-v4-8-1vm
+              cronjob.batch/pt-nightly-hf-diffusers-func-v4-8-1vm
+              cronjob.batch/pt-nightly-hf-fsmt-pjrt-conv-v4-8-1vm
+              cronjob.batch/pt-nightly-hf-fsmt-pjrt-func-v4-8-1vm
+              cronjob.batch/pt-nightly-hf-glue-pjrt-conv-v4-8-1vm
+              cronjob.batch/pt-nightly-hf-gpt2-2b-pjrt-conv-v4-8-1vm
+              cronjob.batch/pt-nightly-lightning-sd-model-pjrt-func-v4-8-1vm
+              cronjob.batch/pt-nightly-llama2-pjrt-infer-func-v4-8-1vm-1vm
+              cronjob.batch/pt-nightly-llama2-pjrt-train-spmd-func-v4-8-1vm-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-conv-v4-32-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-conv-v4-8-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-ddp-conv-v4-8-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-ddp-fake-v4-8-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-fake-v4-32-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-fake-v4-8-1vm
+              cronjob.batch/pt-nightly-resnet50-spmd-batch-func-v4-8-1vm
+              cronjob.batch/pt-nightly-resnet50-spmd-spatial-func-v4-8-1vm
+              cronjob.batch/tf.nightly-resnet-imagenet-conv-v4-32-1vm
+              cronjob.batch/tf.nightly-resnet-imagenet-func-v4-8-1vm
+              cronjob.batch/tf.se.nightly-dlrm-criteo-func-v4-8-1vm
+              cronjob.batch/tf.se.nightly-resnet-imagenet-conv-v4-32-1vm
+              cronjob.batch/tf.se.nightly-resnet-imagenet-func-v4-8-1vm
+              EOF
+              
+              delete_list=$(kubectl get cronjob --namespace=automated -l benchmarkId -o name | grep -vx -f tests.txt)
+              if [[ "$delete_list" ]]; then
+                kubectl delete $delete_list;
+              fi
+            "command":
+            - "bash"
+            - "-cx"
+            "image": "google/cloud-sdk"
+            "name": "clean"
+          "restartPolicy": "Never"
+          "serviceAccount": "cronjob-cleaner"
+  "schedule": "0 */4 * * *"

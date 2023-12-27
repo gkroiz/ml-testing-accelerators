@@ -1,0 +1,41 @@
+"apiVersion": "batch/v1"
+"kind": "CronJob"
+"metadata":
+  "name": "cronjob-cleanup"
+"spec":
+  "jobTemplate":
+    "spec":
+      "backoffLimit": 0
+      "template":
+        "spec":
+          "containers":
+          - "args":
+            - |
+              cat > tests.txt <<EOF
+              cronjob.batch/flax.latest-bart-wiki.summary-conv-v3-32-1vm
+              cronjob.batch/flax.latest-resnet-imagenet-conv-v3-32-1vm
+              cronjob.batch/flax.latest-vit-imagenette-conv-v3-32-1vm
+              cronjob.batch/flax.latest-wmt-wmt17.translate-conv-v3-32-1vm
+              cronjob.batch/jax-pod-head-tpu-ubuntu2204-base-func-v2-32-1vm
+              cronjob.batch/jax-pod-latest-tpu-ubuntu2204-base-func-v2-32-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-fake-v3-32-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-fake-v3-32-1vm
+              cronjob.batch/tf.nightly-resnet-imagenet-conv-v2-32-1vm
+              cronjob.batch/tf.nightly-resnet-imagenet-conv-v3-32-1vm
+              cronjob.batch/tf.se.nightly-dlrm-criteo-conv-v2-32-1vm
+              cronjob.batch/tf.se.nightly-resnet-imagenet-conv-v2-32-1vm
+              cronjob.batch/tf.se.nightly-resnet-imagenet-conv-v3-32-1vm
+              EOF
+              
+              delete_list=$(kubectl get cronjob --namespace=automated -l benchmarkId -o name | grep -vx -f tests.txt)
+              if [[ "$delete_list" ]]; then
+                kubectl delete $delete_list;
+              fi
+            "command":
+            - "bash"
+            - "-cx"
+            "image": "google/cloud-sdk"
+            "name": "clean"
+          "restartPolicy": "Never"
+          "serviceAccount": "cronjob-cleaner"
+  "schedule": "0 */4 * * *"

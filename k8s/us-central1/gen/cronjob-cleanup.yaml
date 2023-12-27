@@ -1,0 +1,74 @@
+"apiVersion": "batch/v1"
+"kind": "CronJob"
+"metadata":
+  "name": "cronjob-cleanup"
+"spec":
+  "jobTemplate":
+    "spec":
+      "backoffLimit": 0
+      "template":
+        "spec":
+          "containers":
+          - "args":
+            - |
+              cat > tests.txt <<EOF
+              cronjob.batch/flax.latest-bart-wiki.summary-func-v2-8-1vm
+              cronjob.batch/flax.latest-bart-wiki.summary-func-v3-8-1vm
+              cronjob.batch/flax.latest-bert-glue.mnli-func-v2-8-1vm
+              cronjob.batch/flax.latest-bert-glue.mnli-func-v3-8-1vm
+              cronjob.batch/flax.latest-bert-glue.mrpc-func-v2-8-1vm
+              cronjob.batch/flax.latest-bert-glue.mrpc-func-v3-8-1vm
+              cronjob.batch/flax.latest-resnet-imagenet-func-v2-8-1vm
+              cronjob.batch/flax.latest-vit-imagenette-func-v2-8-1vm
+              cronjob.batch/flax.latest-vit-imagenette-func-v3-8-1vm
+              cronjob.batch/flax.latest-wmt-wmt17.translate-func-v2-8-1vm
+              cronjob.batch/flax.latest-wmt-wmt17.translate-profile-v3-8-1vm
+              cronjob.batch/jax-compilation-cache-test-func-v2-8-1vm
+              cronjob.batch/pt-2.2-accelerate-smoke-v2-8-1vm
+              cronjob.batch/pt-2.2-mnist-pjrt-conv-v2-8-1vm
+              cronjob.batch/pt-2.2-mnist-pjrt-ddp-conv-v2-8-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-conv-v3-8-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-ddp-fake-v3-8-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-fake-v2-8-1vm
+              cronjob.batch/pt-2.2-resnet50-pjrt-fake-v3-8-1vm
+              cronjob.batch/pt-nightly-accelerate-smoke-v2-8-1vm
+              cronjob.batch/pt-nightly-mnist-pjrt-conv-v2-8-1vm
+              cronjob.batch/pt-nightly-mnist-pjrt-ddp-conv-v2-8-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-conv-v3-8-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-ddp-fake-v3-8-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-fake-v2-8-1vm
+              cronjob.batch/pt-nightly-resnet50-pjrt-fake-v3-8-1vm
+              cronjob.batch/tf.nightly-keras-api-connection-v2-8-1vm
+              cronjob.batch/tf.nightly-keras-api-ctl-v2-8-1vm
+              cronjob.batch/tf.nightly-keras-api-custom-layers-v2-8-1vm
+              cronjob.batch/tf.nightly-keras-api-feature-column-v2-8-1vm
+              cronjob.batch/tf.nightly-keras-api-rnn-v2-8-1vm
+              cronjob.batch/tf.nightly-keras-api-save-and-load-v2-8-1vm
+              cronjob.batch/tf.nightly-keras-api-save-load-localhost-v2-8-1vm
+              cronjob.batch/tf.nightly-keras-api-train-and-evaluate-v2-8-1vm
+              cronjob.batch/tf.nightly-keras-api-transfer-learning-v2-8-1vm
+              cronjob.batch/tf.nightly-keras-api-upsample-v2-8-1vm
+              cronjob.batch/tf.se.nightly-keras-api-connection-v2-8-1vm
+              cronjob.batch/tf.se.nightly-keras-api-ctl-v2-8-1vm
+              cronjob.batch/tf.se.nightly-keras-api-custom-layers-v2-8-1vm
+              cronjob.batch/tf.se.nightly-keras-api-feature-column-v2-8-1vm
+              cronjob.batch/tf.se.nightly-keras-api-rnn-v2-8-1vm
+              cronjob.batch/tf.se.nightly-keras-api-save-and-load-v2-8-1vm
+              cronjob.batch/tf.se.nightly-keras-api-save-load-local-v2-8-1vm
+              cronjob.batch/tf.se.nightly-keras-api-train-and-eval-v2-8-1vm
+              cronjob.batch/tf.se.nightly-keras-api-transfer-learning-v2-8-1vm
+              cronjob.batch/tf.se.nightly-keras-api-upsample-v2-8-1vm
+              EOF
+              
+              delete_list=$(kubectl get cronjob --namespace=automated -l benchmarkId -o name | grep -vx -f tests.txt)
+              if [[ "$delete_list" ]]; then
+                kubectl delete $delete_list;
+              fi
+            "command":
+            - "bash"
+            - "-cx"
+            "image": "google/cloud-sdk"
+            "name": "clean"
+          "restartPolicy": "Never"
+          "serviceAccount": "cronjob-cleaner"
+  "schedule": "0 */4 * * *"
